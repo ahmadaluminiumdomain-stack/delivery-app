@@ -608,6 +608,23 @@ function switchMobileTab(tab) {
   }
 }
 
+// --- HELPER TO COPY IBANS WITH ANIMATION ---
+function copyToClipboard(btn, ibanText) {
+  navigator.clipboard.writeText(ibanText.replace(/\s+/g, '')).then(() => {
+    const originalContent = btn.innerHTML;
+    btn.style.borderColor = '#16a34a';
+    btn.style.color = '#16a34a';
+    btn.innerHTML = `<span>Copied!</span><span style="font-size:11px;">✅</span>`;
+    setTimeout(() => {
+      btn.style.borderColor = '';
+      btn.style.color = '';
+      btn.innerHTML = originalContent;
+    }, 1500);
+  }).catch(err => {
+    console.error("Failed to copy IBAN text", err);
+  });
+}
+
 // --- CLOUD DATABASE HISTORY DIRECTORY LOADERS ---
 function fetchRecentQuotes() {
   const listEl = document.getElementById('recentQuotesList');
@@ -767,7 +784,7 @@ function generateDeliveryNote() {
   const headerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:12px;border-bottom:3px solid #991b1b;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:15px;">
-        <img src="Ahmad_Aluminium_Logo.png?v=5" alt="Ahmad Aluminium Logo" style="height:65px; max-width:280px; object-fit:contain; border-radius:4px;">
+        <img src="Ahmad_Aluminium_Logo.png?v=5" alt="Ahmad Aluminium Logo" style="height:85px; max-width:320px; object-fit:contain; border-radius:4px;">
       </div>
       <div style="text-align:right;">
         <div style="font-size:38px;font-weight:900;color:#991b1b;letter-spacing:5px;text-transform:uppercase;">DELIVERY NOTE</div>
@@ -831,13 +848,13 @@ function generateDeliveryNote() {
         <!-- STAMP AREA -->
         <div style="text-align:center;">
           <div style="font-size:11px;color:#64748b;margin-bottom:6px;">STAMP:</div>
-          <img src="Stamp-Ahmad.jpg?v=5" alt="Ahmad Stamp" style="height:80px; width:auto; display:inline-block; border-radius:4px; object-fit:contain;">
+          <img src="Stamp-Ahmad.jpg?v=5" alt="Ahmad Stamp" style="height:110px; width:auto; display:inline-block; border-radius:4px; object-fit:contain;">
         </div>
 
         <!-- SIGNATURE AREA -->
         <div style="text-align:center; border-bottom:1px solid #cbd5e1; padding-bottom:8px; width:220px;">
           <span style="font-size:12px; font-weight:bold; color:#1e293b; display:inline-block; vertical-align:middle; margin-right:8px;">SIGNATURE:</span>
-          <img src="Signature-Ahmad.png?v=5" alt="Ahmad Signature" style="height:35px; width:auto; display:inline-block; vertical-align:middle; object-fit:contain;">
+          <img src="Signature-Ahmad.png?v=5" alt="Ahmad Signature" style="height:55px; width:auto; display:inline-block; vertical-align:middle; object-fit:contain;">
         </div>
       </div>
     </div>
