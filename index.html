@@ -394,8 +394,8 @@
       border: none !important; 
       width: 210mm !important; 
       height: auto !important; 
-      min-height: 297mm !important; 
-      padding: 20mm !important; 
+      min-height: 100% !important; /* Changed from 297mm to prevent forcing an empty sheet */
+      padding: 15mm 20mm !important; /* Slightly smaller top/bottom padding to give a safety margin */
     }
     .cohesive-footer-block { margin-top: 0 !important; }
   }
@@ -471,8 +471,8 @@
     </div>
     
     <div class="form-group"><label>Date</label><input type="date" id="quotDate"></div>
-    <div class="form-group"><label>Deliver To (Client)</label><input type="text" id="clientAddr" placeholder="Spring powder coating" oninput="generateDeliveryNote()"></div>
-    <div class="form-group"><label>Subject / Project Reference</label><input type="text" id="subject" placeholder="2 SPRING POWDER COATING-" oninput="generateDeliveryNote()"></div>
+    <div class="form-group"><label>Deliver To (Client)</label><input type="text" id="clientAddr" placeholder="e.g. Spring powder coating" oninput="generateDeliveryNote()"></div>
+    <div class="form-group"><label>Subject / Project Reference</label><input type="text" id="subject" placeholder="e.g. 2 SPRING POWDER COATING-" oninput="generateDeliveryNote()"></div>
 
     <h2 style="margin-top:20px;">🔧 Line Items</h2>
     <div class="items-section" id="itemsContainer"></div>
@@ -494,7 +494,7 @@
 </div>
 
 <script>
-// --- NEW INDEPENDENT DATABASE CONFIGURATION ---
+// --- INDEPENDENT DATABASE CONFIGURATION ---
 const DELIVERY_DB_URL = "https://script.google.com/macros/s/AKfycbyx5OgrmQUgEQJpgH5rJYCF-q9HnET99eBoBYsr7lLTZxXxxGKbvB8bKN8cxL7XYVMYWg/exec";
 
 // Global state variables
@@ -608,23 +608,6 @@ function switchMobileTab(tab) {
   }
 }
 
-// --- HELPER TO COPY IBANS WITH ANIMATION ---
-function copyToClipboard(btn, ibanText) {
-  navigator.clipboard.writeText(ibanText.replace(/\s+/g, '')).then(() => {
-    const originalContent = btn.innerHTML;
-    btn.style.borderColor = '#16a34a';
-    btn.style.color = '#16a34a';
-    btn.innerHTML = `<span>Copied!</span><span style="font-size:11px;">✅</span>`;
-    setTimeout(() => {
-      btn.style.borderColor = '';
-      btn.style.color = '';
-      btn.innerHTML = originalContent;
-    }, 1500);
-  }).catch(err => {
-    console.error("Failed to copy IBAN text", err);
-  });
-}
-
 // --- CLOUD DATABASE HISTORY DIRECTORY LOADERS ---
 function fetchRecentQuotes() {
   const listEl = document.getElementById('recentQuotesList');
@@ -719,11 +702,11 @@ function deserializeItems(itemsData) {
   document.getElementById('itemsContainer').innerHTML = '';
   itemCount = 0;
   itemsData.forEach(item => {
-    addItem(item.itemName || item.name || '', item.qty || 1, item.colour || '');
+    addItem(item.itemName || item.name || '', item.qty || '', item.colour || '');
   });
 }
 
-function addItem(pName = '', pQty = 1, pColour = '') {
+function addItem(pName = '', pQty = '', pColour = '') {
   itemCount++; const id = itemCount;
   const div = document.createElement('div'); div.className = 'item-row'; div.id = 'item_' + id;
 
@@ -731,7 +714,7 @@ function addItem(pName = '', pQty = 1, pColour = '') {
     <h4>Item #${id}</h4><button class="btn-remove" onclick="removeItem(${id})">✕</button>
     <div class="item-grid">
       <div class="full"><label>Particulars (Description)</label><input type="text" id="name_${id}" value="${pName}" oninput="generateDeliveryNote()"></div>
-      <div><label>Quantity</label><input type="number" id="qty_${id}" value="${pQty}" oninput="generateDeliveryNote()"></div>
+      <div><label>Quantity</label><input type="text" id="qty_${id}" value="${pQty}" oninput="generateDeliveryNote()"></div>
       <div><label>Colour / Specification</label><input type="text" id="colour_${id}" value="${pColour}" oninput="generateDeliveryNote()"></div>
     </div>`;
   document.getElementById('itemsContainer').appendChild(div);
@@ -744,9 +727,9 @@ function getItems() {
   document.querySelectorAll('.item-row').forEach(row => {
     const id = row.id.replace('item_', '');
     arr.push({
-      itemName: document.getElementById('name_' + id).value,
-      qty: parseFloat(document.getElementById('qty_' + id).value) || 0,
-      colour: document.getElementById('colour_' + id).value || '-'
+      itemName: document.getElementById('name_' + id).value || '',
+      qty: document.getElementById('qty_' + id).value || '',
+      colour: document.getElementById('colour_' + id).value || ''
     });
   });
   return arr;
@@ -754,10 +737,10 @@ function getItems() {
 
 // --- GENERATE DISPATCH DOCUMENT (SCREENSHOT SPECIFICATIONS ENFORCED) ---
 function generateDeliveryNote() {
-  const ref = document.getElementById('quotRef').value || 'DN-2026-205';
+  const ref = document.getElementById('quotRef').value || '';
   const date = formatDate(document.getElementById('quotDate').value);
-  const clientAddr = document.getElementById('clientAddr').value || 'Spring powder coating';
-  const subject = document.getElementById('subject').value || '2 SPRING POWDER COATING-';
+  const clientAddr = document.getElementById('clientAddr').value || '';
+  const subject = document.getElementById('subject').value || '';
   const items = getItems();
 
   if (items.length === 0) { 
@@ -770,9 +753,9 @@ function generateDeliveryNote() {
   items.forEach((item, idx) => {
     rows += `<tr>
       <td style="text-align:center;font-weight:bold;vertical-align:top;">${idx + 1}</td>
-      <td style="vertical-align:top;">${item.itemName}</td>
-      <td style="text-align:center;font-weight:bold;vertical-align:top;">${item.qty}</td>
-      <td style="vertical-align:top;font-size:10px;">${item.colour}</td>
+      <td style="vertical-align:top;">${item.itemName || '&nbsp;'}</td>
+      <td style="text-align:center;font-weight:bold;vertical-align:top;">${item.qty || '&nbsp;'}</td>
+      <td style="vertical-align:top;font-size:10px;">${item.colour || '&nbsp;'}</td>
     </tr>`;
   });
 
@@ -865,7 +848,7 @@ function generateDeliveryNote() {
 
 // --- AUTOMATIC SEQUENCE PDF SAVER ---
 async function downloadPDF() {
-  const ref = document.getElementById('quotRef').value || 'DN-2026-205';
+  const ref = document.getElementById('quotRef').value || '';
   const element = document.getElementById('quotationDoc');
   
   if (!element || element.innerHTML.includes('Fill form & Generate')) {
@@ -963,6 +946,7 @@ function shareToWhatsApp() {
   window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
 }
 
+// Clear Draft and keep default rows
 function clearDraft() {
   if (confirm("Reset current details?")) {
     document.getElementById('clientAddr').value = '';
@@ -993,8 +977,7 @@ window.onload = () => {
 
   initFolderSelection(); 
   fetchRecentQuotes();   
-  addItem('Handle', 1, 'RAL 9010MATE WHITE');
-  addItem('U channel', 2, 'RAL 9010MATE WHITE');
+  addItem();
   generateDeliveryNote();
 };
 </script>
