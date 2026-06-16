@@ -234,23 +234,6 @@
   
   .btn-pdf { background: #991b1b; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 700; }
   .btn-pdf:hover { background: #7f1d1d; }
-  
-  .btn-whatsapp { 
-    background: #16a34a; 
-    color: white; 
-    border: none; 
-    padding: 10px 18px; 
-    border-radius: 6px; 
-    cursor: pointer; 
-    font-size: 13px; 
-    font-weight: 700; 
-    display: flex; 
-    align-items: center; 
-    gap: 6px; 
-  }
-  .btn-whatsapp:hover { background: #15803d; }
-  
-  .btn-print { background: #1e293b; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; }
 
   /* Physical A4 dimensions (Unified continuous wrapper) */
   .quotation-page-sheet { 
@@ -332,7 +315,7 @@
     .form-panel.active, .preview-panel.active { display: block !important; }
 
     /* Centered mobile preview area wrapper (Scroll eliminated via zoom scale) */
-    /* Mobile-only zoom scaling explicitly turns OFF during PDF compilation using body:not(.pdf-export) to fix overlapping text [1] */
+    /* Mobile-only zoom scaling explicitly turns OFF during PDF compilation using body:not(.pdf-export) to fix overlapping text */
     body:not(.pdf-export) .preview-panel { 
       background: #e2e8f0 !important; 
       display: flex;
@@ -484,8 +467,8 @@
     </div>
     
     <div class="form-group"><label>Date</label><input type="date" id="quotDate"></div>
-    <div class="form-group"><label>Deliver To (Client)</label><input type="text" id="clientAddr" placeholder="e.g. Spring powder coating" oninput="generateDeliveryNote()"></div>
-    <div class="form-group"><label>Subject / Project Reference</label><input type="text" id="subject" placeholder="e.g. 2 SPRING POWDER COATING-" oninput="generateDeliveryNote()"></div>
+    <div class="form-group"><label>Deliver To (Client)</label><input type="text" id="clientAddr" placeholder="e.g. Client Name/Address" oninput="generateDeliveryNote()"></div>
+    <div class="form-group"><label>Subject / Project Reference</label><input type="text" id="subject" placeholder="e.g. Subject Reference" oninput="generateDeliveryNote()"></div>
 
     <h2 style="margin-top:20px;">🔧 Line Items</h2>
     <div class="items-section" id="itemsContainer"></div>
@@ -497,8 +480,6 @@
   <div class="preview-panel">
     <div class="preview-toolbar">
       <button class="btn-pdf" onclick="downloadPDF()">📄 Download PDF</button>
-      <button class="btn-whatsapp" onclick="shareToWhatsApp()">💬 WhatsApp</button>
-      <button class="btn-print" onclick="window.print()">🖨️ Print</button>
     </div>
     <div class="quotation-container" id="quotationDoc">
       <div style="text-align:center; color:#94a3b8; padding:80px 0; font-size:14px; font-weight: 500;">Fill form & Generate</div>
@@ -874,7 +855,6 @@ async function downloadPDF() {
 
   const opt = {
     margin:       0,
-    filename:     `${ref}.pdf`,
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2, useCORS: true, logging: false },
     jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' },
@@ -882,32 +862,35 @@ async function downloadPDF() {
   };
 
   try {
+    // Generate the PDF blob
+    const blob = await html2pdf().set(opt).from(element).output('blob');
+    
+    // Restore layout immediately after generating the blob file
+    document.body.classList.remove('pdf-export');
+
+    // Executing direct folder save (if configured) or standard download trigger
     if (savedFolderHandle) {
       const hasPermission = await verifyPermission(savedFolderHandle, true);
       if (hasPermission) {
-        const blob = await html2pdf().set(opt).from(element).output('blob');
         const fileHandle = await savedFolderHandle.getFileHandle(`${ref}.pdf`, { create: true });
         const writable = await fileHandle.createWritable();
         await writable.write(blob);
         await writable.close();
         
-        alert(`Successfully auto-saved as: "${ref}.pdf"`);
+        alert(`Successfully saved to folder as: "${ref}.pdf"`);
         incrementReferenceNumber();
-        document.body.classList.remove('pdf-export'); 
         return;
       }
     }
+    
+    // Standard download fallback
+    html2pdf().set(opt).from(element).save(`${ref}.pdf`).then(() => {
+      incrementReferenceNumber();
+    });
   } catch (err) {
-    console.error("Auto-save folder writing failed:", err);
+    document.body.classList.remove('pdf-export');
+    console.error("PDF compiling or folder saving failed:", err);
   }
-
-  html2pdf().set(opt).from(element).save().then(() => {
-    incrementReferenceNumber();
-    document.body.classList.remove('pdf-export'); 
-  }).catch(err => {
-    document.body.classList.remove('pdf-export'); 
-    console.error("PDF compile failed:", err);
-  });
 }
 
 function incrementReferenceNumber() {
@@ -959,7 +942,7 @@ function shareToWhatsApp() {
   window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
 }
 
-// Clear Draft and keep default rows
+// Clear Draft and keep default empty row
 function clearDraft() {
   if (confirm("Reset current details?")) {
     document.getElementById('clientAddr').value = '';
