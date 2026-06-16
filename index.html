@@ -394,10 +394,23 @@
       border: none !important; 
       width: 210mm !important; 
       height: auto !important; 
-      min-height: 100% !important; /* Changed from 297mm to prevent forcing an empty sheet */
-      padding: 15mm 20mm !important; /* Slightly smaller top/bottom padding to give a safety margin */
+      min-height: 100% !important; /* Forces natural boundary fitting and prevents trailing blank sheet generation */
+      padding: 15mm 20mm !important; /* Slightly smaller top/bottom padding to act as a layout margin safety buffer */
     }
     .cohesive-footer-block { margin-top: 0 !important; }
+  }
+
+  /* --- EXPLICIT EXPORT OVERRIDES TO PERMANENTLY BAN TRAILING BLANK PAGES DURING PDF SAVE --- */
+  body.pdf-export .quotation-page-sheet {
+    min-height: auto !important; /* Overrides screen min-height 297mm to prevent overflow spacing generation */
+    height: auto !important;
+    padding: 15mm 20mm !important; /* Adjust padding to safe print dimensions */
+    margin-bottom: 0 !important;
+  }
+  body.pdf-export .cohesive-footer-block {
+    margin-top: 25px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 </style>
 </head>
