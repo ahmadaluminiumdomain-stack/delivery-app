@@ -384,7 +384,11 @@
   }
 
   /* --- EXPLICIT EXPORT OVERRIDES TO PERMANENTLY BAN TRAILING BLANK PAGES DURING PDF SAVE --- */
+  /* Locked width to exact 794px desktop dimensions on PDF save to prevent overlapping layout constraints on mobile devices */
   body.pdf-export .quotation-page-sheet {
+    width: 794px !important;
+    min-width: 794px !important;
+    max-width: 794px !important;
     min-height: auto !important; /* Overrides screen min-height 297mm to prevent overflow spacing generation */
     height: auto !important;
     padding: 15mm 20mm !important; /* Adjust padding to safe print dimensions */
@@ -856,7 +860,12 @@ async function downloadPDF() {
   const opt = {
     margin:       0,
     image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true, logging: false },
+    html2canvas:  { 
+      scale: 2, 
+      useCORS: true, 
+      logging: false,
+      windowWidth: 800 // Forces the browser to calculate desktop layouts for the canvas drawing
+    },
     jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' },
     pagebreak:    { mode: ['css', 'legacy'] }
   };
